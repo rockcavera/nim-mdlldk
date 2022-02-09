@@ -15,7 +15,7 @@ addUnloadProc(RAllowUnload):
 # Adds the `test` procedure which can be called from mIRC like this:
 # `/dll test.dll test`
 newProcToExport(test):
-  result.outData = "/echo -a Dll test made in Nim " & NimVersion & " for mIRC"
+  result.outData = "echo -a Dll test made in Nim " & NimVersion & " for mIRC"
   result.ret = RCommand
 
 # It must be added to the last line of your Nim code to correctly export all

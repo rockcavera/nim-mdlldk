@@ -19,9 +19,9 @@
 ## `WideCString`, and `newProcToExportA()` template, in which `data` and `parms` parameters are
 ## `cstring`, which also add an exported procedure to dll, but at a lower level than
 ## `newProcToExport()`. However, if your choice is `newProcToExportW()` or `newProcToExportA()` you
-## can also take advantage of safe copying for `data` and `parms` pointers using
-## `mToWideCStringAndCopy()` or `mToCStringAndCopy`. Remembering that these last two procedures are
-## only available if the `addLoadProc()` template is called in your code.
+## can also take advantage of safe copying for `data` and `parms` using `mToWideCStringAndCopy()` or
+## `mToCStringAndCopy()`. Remembering that these last two procedures are only available if the
+## `addLoadProc()` template is called in your code.
 ##
 ## Finally, the `exportAllProcs()` template facilitates the process of exporting procedures to dll,
 ## as it generates the .def file with all the symbols that must be exported and links to the dll
@@ -54,7 +54,7 @@
 ## # Adds the `test` procedure which can be called from mIRC like this:
 ## # `/dll test.dll test`
 ## newProcToExport(test):
-##   result.outData = "/echo -a Dll test made in Nim " & NimVersion & " for mIRC"
+##   result.outData = "echo -a Dll test made in Nim " & NimVersion & " for mIRC"
 ##   result.ret = RCommand
 ##
 ## # It must be added to the last line of your Nim code to correctly export all
