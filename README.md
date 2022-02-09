@@ -66,4 +66,4 @@ In case you want to produce a smaller dll, you can add such switches:
 With this last line my generated dll had only 17KB against 285KB of the other one, using the tdm64-gcc-10.3.0-2 compiler.
 
 # Documentation
-https://rockcavera.github.io/nim-mdlldk/theindex.html
+https://rockcavera.github.io/nim-mdlldk/mdlldk.html
