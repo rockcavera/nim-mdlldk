@@ -23,7 +23,7 @@ Documentation used as a reference: https://www.mirc.com/help/html/dll.html.
 
 or
 
-`nimble install https://github.com/rockcavera/nim-mdldk.git`
+`nimble install https://github.com/rockcavera/nim-mdlldk.git`
 
 # Basic Use
 This is a basic commented example:
