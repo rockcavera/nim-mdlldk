@@ -16,7 +16,9 @@ Finally, the `exportAllProcs()` template facilitates the process of exporting pr
 
 Currently supported with the gcc, clang and vcc compilers, and the C and C++ backends. It is advised to use the most current version of Nim or the devel version.
 
-Documentation used as a reference: https://www.mirc.com/help/html/dll.html.
+Documentation used as a reference:
+- https://www.mirc.com/help/html/dll.html
+- https://www.mirc.com/versions.txt
 
 # Install
 `nimble install mdlldk`
