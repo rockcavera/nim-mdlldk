@@ -270,7 +270,7 @@ template addLoadProc*(keepLoaded, strUnicode: bool, body: untyped) =
     var size = len(source)
     if size >= maxBytes:
       size = maxBytes - 1
-    copyMem(addr dest[0], cstring(source), size)
+    copyMem(dest, cstring(source), size)
     dest[size] = '\0'
 
   proc mToWideCStringAndCopy(dest: pointer|WideCString, source: string) =
@@ -278,13 +278,13 @@ template addLoadProc*(keepLoaded, strUnicode: bool, body: untyped) =
     let
       maxBytes = mMaxBytes()
       w = newWideCString(source)
-    var size = widestrs.len(w) * 2
+    var size = len(w) * 2
     if size >= maxBytes:
       size = maxBytes - 2
     when defined(nimv2):
-      copyMem(addr dest[0], toWideCString(w), size)
+      copyMem(dest, toWideCString(w), size)
     else:
-      copyMem(addr dest[0], cast[pointer](w), size)
+      copyMem(cast[pointer](dest), cast[pointer](w), size)
     dest[size shr 1] = Utf16Char(0'i16)
 
   {.pop.}

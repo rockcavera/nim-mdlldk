@@ -38,7 +38,7 @@ newProcToExportW(debug):
   var outData = newStringOfCap(mMaxBytes())
 
   add(outData, "echo -ea Dll debug made in Nim " & NimVersion & " for mIRC")
-  add(outData, " | echo -ea Compile Command Line: " & querySetting(commandLine))
+  add(outData, " | echo -ea Compiled with command line: " & querySetting(commandLine))
   add(outData, " | echo -a Parameters accessible in body:")
   add(outData, " | echo -a mWnd: " & $mWnd)
   add(outData, " | echo -a aWnd: " & $aWnd)

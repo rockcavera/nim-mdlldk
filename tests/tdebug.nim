@@ -63,7 +63,7 @@ proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcRet
     cData[0] = '\0'
 
   add(outData, "echo -ea Dll debug made in Nim " & NimVersion & " for mIRC")
-  add(outData, " | echo -ea Compile Command Line: " & querySetting(commandLine))
+  add(outData, " | echo -ea Compiled with command line: " & querySetting(commandLine))
   add(outData, " | echo -a Parameters:")
   add(outData, " | echo -a mWnd: " & $mWnd)
   add(outData, " | echo -a aWnd: " & $aWnd)
@@ -73,8 +73,8 @@ proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcRet
   add(outData, " | echo -a nopause: " & $nopause)
   add(outData, " | echo -a -")
   add(outData, " | echo -a Address pointed by:")
-  add(outData, " | echo -a data: " & $(cast[uint](addr data)))
-  add(outData, " | echo -a parms: " & $(cast[uint](addr parms)))
+  add(outData, " | echo -a data: " & $(cast[uint](data)))
+  add(outData, " | echo -a parms: " & $(cast[uint](parms)))
   add(outData, " | echo -a -")
   add(outData, " | echo -a Possible pointer size of:")
   add(outData, " | echo -a data: " & $estimatePointerSize(data))
