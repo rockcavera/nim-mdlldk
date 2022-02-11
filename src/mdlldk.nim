@@ -4,36 +4,42 @@
 ## symbols.
 ##
 ## When exporting the LoadDll() procedure with the `addLoadProc()` template, procedures will be
-## added that help in the development of your dll.
+## added that help in the development of your dll. The list of added procedures can be seen
+## `here<mdlldk/onlydocumentation.html#12>`_.
 ##
-## There is also the `newProcToExport()` template, which adds a procedure exported to dll and
-## creates an entire abstraction to enable it to work in both unicode and non-unicode mIRC, that is,
-## from version 5.6 (5.60), when support for dlls was added , up to the latest known version of
-## mIRC. If you choose to use `newProcToExport()`, it will not be necessary to manually fill in the
-## `data` or `parms` parameters, as this is done automatically, safely and without exceeding the
-## size allocated by mIRC in the pointers. If it exceeds, it will be truncated to the limit. This
-## avoids mIRC crashes. This "magic" is done at runtime and according to each mIRC version, as the
-## memory size allocated to the `data` and `parms` pointers has changed with the mIRC versions.
+## The `newProcToExport()` template, which adds a procedure exported to dll and creates an entire
+## abstraction to enable it to work in both unicode and non-unicode mIRC, that is, from version 5.6
+## (5.60), when support for dlls was added, up to the latest known version of mIRC. If you choose to
+## use `newProcToExport()`, it will not be necessary to manually fill in the `data` or `parms`
+## parameters, as this is done automatically, safely and without exceeding the size allocated by
+## mIRC in the pointers and if it exceeds, it will be truncated to the limit and avoids mIRC
+## crashes. This "magic" is done at runtime and according to each mIRC version, as the memory size
+## allocated to the `data` and `parms` pointers has changed with the mIRC versions.
 ##
-## There are also the `newProcToExportW()` template, in which `data` and `parms` parameters are
-## `WideCString`, and `newProcToExportA()` template, in which `data` and `parms` parameters are
-## `cstring`, which also add an exported procedure to dll, but at a lower level than
-## `newProcToExport()`. However, if your choice is `newProcToExportW()` or `newProcToExportA()` you
-## can also take advantage of safe copying for `data` and `parms` using `mToWideCStringAndCopy()` or
-## `mToCStringAndCopy()`. Remembering that these last two procedures are only available if the
-## `addLoadProc()` template is called in your code.
+## There are also the `newProcToExportW()` and `newProcToExportA()` templates, which also add an
+## exported procedure to dll, but at a lower level than `newProcToExport()`. In the first template
+## the parameters `data` and `parms` will be of type `WideCString`, while in the second they will be
+## `cstring`. Even if you use one of these two templates you can also take advantage of safe copying
+## for `data` and `parms` using `mToWideCStringAndCopy()` or `mToCStringAndCopy()`. Remembering that
+## these last two procedures are only available if the `addLoadProc()` template is called in your
+## code.
 ##
 ## Finally, the `exportAllProcs()` template facilitates the process of exporting procedures to dll,
 ## as it generates the .def file with all the symbols that must be exported and links to the dll
 ## during the linking process.
 ##
-## Currently supported with the gcc, clang and vcc compilers, and the C and C++ backends. It is
-## advised to use the most current version of Nim or the devel version.
+## For more information see the documentation below.
 ##
-## Documentation used as a reference:
+## **Current support**
+##
+## Currently supported with the gcc, clang and vcc compilers, and the C and C++ backends. It is
+## advised to use the last version of Nim or the devel version.
+##
+## **Documentation used as a reference**
 ## - https://www.mirc.com/help/html/dll.html
 ## - https://www.mirc.com/versions.txt
-## 
+## - https://forum.nim-lang.org/t/8897
+##
 ## Basic Use
 ## =========
 ## This is a basic commented example:
@@ -65,20 +71,23 @@
 ## ```
 ## The above code should be compiled as follows:
 ##
-## `nim c --app:lib -d:release --cpu:i386 --gc:arc test.nim`
+## `nim c --app:lib --cpu:i386 --gc:orc -d:useMalloc -d:release test.nim`
 ##
 ## To learn more about compiler options, visit https://nim-lang.org/docs/nimc.html.
 ##
 ## In case you want to produce a smaller dll, you can add such switches:
 ##
-## `nim c --app:lib -d:danger -d:useMalloc -d:strip --opt:size --cpu:i386 --gc:arc test.nim`
+## `nim c --app:lib --cpu:i386 --gc:orc -d:useMalloc -d:danger -d:strip --opt:size test.nim`
 ##
-## With this last line my generated dll had only 17KB against 285KB of the other one, using the
-## tdm64-gcc-10.3.0-2 compiler.
+## With this last line my generated dll had only 18.5KB against 139KB of the other one, using the
+## Nim 1.6.4 and tdm64-gcc-10.3.0-2 compilers.
 
 import std/[compilesettings, macros, os, sets]
 
 import ./mdlldk/types
+
+when defined(nimdoc):
+  import ./mdlldk/onlydocumentation
 
 export types
 
@@ -155,6 +164,8 @@ proc addProcToExport*(name: string, size: int) {.compileTime.} =
   ## **Notes**
   ## - Procedures called by mIRC have 24 bytes in the parameter list.
   ## - Don't forget to call the `exportAllProcs()` template at the end of your Nim code.
+  ## - Should not use this proc to add procedures created with `newProcToExport()`,
+  ##   `newProcToExportW()` and `newProcToExportA()`.
   incl(dllProcs, (name, size))
 
 template exportAllProcs*() =
@@ -169,67 +180,27 @@ template addLoadProc*(keepLoaded, strUnicode: bool, body: untyped) =
   ## the information passed by mIRC to the dll, through the `LoadInfo` object, it makes some
   ## corrections that facilitate the development of the dll, such as:
   ## - determine the total bytes value allocated to the `data` and `parms` parameters according to
-  ##   the mIRC version and string type (`WideCString` or `cstring`), since the `LoadInfo` structure
+  ##   the mIRC version and string type (`WideCString` or `cstring`), since the `LoadInfo` object
   ##   did not always pass such information.
   ## - to correct and determine the version passed in the `mVersion` field, of the `LoadInfo`
   ##   object, because in some versions the major version of mIRC was passed as 0 and after version
   ##   6.21 mIRC started to adopt the filling with zero to the right of the minor version, which was
   ##   not done previously and caused ambiguity between versions.
   ##
-  ## It also adds several other Nim procedures to help with development. However, to have access to
-  ## these added procedures it is necessary to call the `addLoadProc()` template on a line above the
-  ## procedure usage.
+  ## It also adds other Nim procedures to help with development. However, to have access to these
+  ## added procedures it is necessary to call the `addLoadProc()` template on a line above the
+  ## procedure usage. See the list of added procedures `here<mdlldk/onlydocumentation.html#12>`_.
   ## 
   ## **Template parameters**
-  ## - `keepLoaded` sets the `mKeep` field of the `LoadInfo` object, if possible. See
-  ##   `LoadInfo<mdlldk/types.html#LoadInfo>`_.
-  ## - `strUnicode` sets the `mUnicode` field of the `LoadInfo` object, if possible. See
-  ##   `LoadInfo<mdlldk/types.html#LoadInfo>`_.
+  ## - `keepLoaded` sets the `mKeep` field of the `LoadInfo` object, if possible. If it is `true` it
+  ##   will keep the dll loaded after being called, however, if it is `false`, the dll will be
+  ##   unloaded right after use. See `mKeep` field in `LoadInfo<mdlldk/types.html#LoadInfo>`_.
+  ## - `strUnicode` sets the `mUnicode` field of the `LoadInfo` object, if possible. If it is `true`
+  ##   the communication between mIRC and dll will be by the use of unicode strings (`WideCString`),
+  ##   however, if it is `false`, the communication will be by ANSI strings (`cstring`). See
+  ##   `mUnicode` field in `LoadInfo<mdlldk/types.html#LoadInfo>`_.
   ## - `body` passes a code block that will be appended to the end of the LoadDll() procedure. If
   ##   you didn't want to pass any code, use the `discard` keyword.
-  ## 
-  ## **Procedures added with the template**
-  ## ```nim
-  ## proc mMajor(): int {.inline.}
-  ##   ## Returns the fixed major version of mIRC. Returns `-1` if unable to determine.
-  ## 
-  ## proc mMinor(): int {.inline.}
-  ##   ## Returns the fixed minor version of mIRC. Returns `-1` if unable to determine.
-  ## 
-  ## proc mBeta(): int {.inline.}
-  ##   ## Returns the beta version of mIRC. Returns `-1` if unable to determine and `0`
-  ##   ## if it is not a beta version.
-  ## 
-  ## proc mMaxBytes(): int {.inline.}
-  ##   ## Returns the size, in bytes, allocated in the pointers to the `data` and
-  ##   ## `parms` parameters.
-  ## 
-  ## proc mKeepLoaded(): bool {.inline.}
-  ##   ## Returns `true` if mIRC will keep the dll loaded after the call. If it returns
-  ##   ## `false` mIRC will unload the dll after the call.
-  ## 
-  ## proc mUnicode(): bool {.inline.}
-  ##   ## Returns `true` if the communication between mIRC and the dll will be via
-  ##   ## unicode strings. If it returns `false` the communication will be by ANSI
-  ##   ## C strings.
-  ## 
-  ## proc mMainWindowHandle(): HWND {.inline.}
-  ##   ## Returns a `HWND` for the identifier of the main window of mIRC. The `HWND`
-  ##   ## type is an alias for `int`.
-  ## 
-  ## proc mRawVersion(): uint32 {.inline.}
-  ##   ## Returns a `uint32` with the raw version passed by mIRC, in the `mVersion`
-  ##   ## field, of the `LoadInfo` object, when loading the dll.
-  ##   ## **It is recommended to use the `mMajor()` and `mMinor()`.**
-  ## 
-  ## proc mToCStringAndCopy(dest: pointer|cstring, source: string) {.inline.}
-  ##   ## Transforms `source` to `cstring` and copies it to `dest` up to the byte limit
-  ##   ## of `mMaxBytes()`.
-  ## 
-  ## proc mToWideCStringAndCopy(dest: pointer|WideCString, source: string)
-  ##   ## Transforms `source` into `WideCString` and copies it to `dest` up to the byte
-  ##   ## limit of `mMaxBytes()`.
-  ## ```
   static:
     addProcToExport("LoadDll", 4)
 
