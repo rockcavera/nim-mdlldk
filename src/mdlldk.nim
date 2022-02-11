@@ -150,11 +150,10 @@ proc pExportAllProcs() {.compileTime.} =
     {.passL: pathDef.}
 
 proc addProcToExport*(name: string, size: int) {.compileTime.} =
-  ## Add procedure `name` to be exported to dll. The `size` parameter indicates the total size in
-  ## bytes of the procedure parameter types.
+  ## Adds procedure `name`, which has `size` bytes in the parameter list, to be exported to the dll.
   ## 
   ## **Notes**
-  ## - Procedures called by mIRC are 24 bytes long.
+  ## - Procedures called by mIRC have 24 bytes in the parameter list.
   ## - Don't forget to call the `exportAllProcs()` template at the end of your Nim code.
   incl(dllProcs, (name, size))
 
@@ -167,8 +166,8 @@ template exportAllProcs*() =
 template addLoadProc*(keepLoaded, strUnicode: bool, body: untyped) =
   ## Adds and exports the LoadDll() procedure, which is called when the dll is loaded in mIRC from
   ## version 5.8 onwards. In addition to adding the LoadDll() procedure, which captures and stores
-  ## the information passed by mIRC, through the `LoadInfo` object, it makes some corrections that
-  ## facilitate the development of the dll, such as:
+  ## the information passed by mIRC to the dll, through the `LoadInfo` object, it makes some
+  ## corrections that facilitate the development of the dll, such as:
   ## - determine the total bytes value allocated to the `data` and `parms` parameters according to
   ##   the mIRC version and string type (`WideCString` or `cstring`), since the `LoadInfo` structure
   ##   did not always pass such information.

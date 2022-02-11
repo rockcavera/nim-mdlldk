@@ -24,18 +24,35 @@ addUnloadProc(RAllowUnload):
 
   discard messageBox(mMainWindowHandle(), cstring(msg), cstring(title), cuint(0'u32))
 
-# This procedure estimates the memory size allocated to a `pointer` or `cstring`.
-proc estimatePointerSize(p: pointer|cstring): int =
-  when p is pointer:
-    var p = cast[cstring](p)
-  while p[result] != '\0' and result < 100000:
-    inc(result)
-  while p[result] == '\0' and result < 100000:
-    inc(result)
+# This procedure estimates the memory size allocated to a `pointer`.
+proc estimatePointersSize(d, p: pointer): tuple[d, p: int] =
+  const limit = 100_000
+
+  template estimate(x: cstring, limitPtr: uint, counter: var int) =
+    while x[counter] != '\0' and counter < limit and cast[uint](unsafeAddr(x[counter])) < limitPtr:
+      inc(counter)
+    while x[counter] == '\0' and counter < limit and cast[uint](unsafeAddr(x[counter])) < limitPtr:
+      inc(counter)
+
+  let
+    d = cast[cstring](d)
+    p = cast[cstring](p)
+    dAddr = cast[uint](unsafeAddr(d[0]))
+    pAddr = cast[uint](unsafeAddr(p[0]))
+
+  if dAddr > pAddr:
+    estimate(p, dAddr, result.p)
+    estimate(d, high(uint), result.d)
+  else:
+    estimate(d, pAddr, result.d)
+    estimate(p, high(uint), result.p)
 
 # Adds the `debug` procedure which can be called from mIRC like this: `/dll tdebuga.dll debug`.
 newProcToExportA(debug):
   var outData = newStringOfCap(mMaxBytes())
+
+  let (dataSizeEstimate, parmsSizeEstimate) = estimatePointersSize(unsafeAddr(data[0]),
+                                                                   unsafeAddr(parms[0]))
 
   add(outData, "echo -ea Dll debug made in Nim " & NimVersion & " for mIRC")
   add(outData, " | echo -ea Compiled with command line: " & querySetting(commandLine))
@@ -52,8 +69,8 @@ newProcToExportA(debug):
   add(outData, " | echo -a parms: " & $(cast[uint](parms)))
   add(outData, " | echo -a -")
   add(outData, " | echo -a Possible pointer size of:")
-  add(outData, " | echo -a data: " & $estimatePointerSize(data))
-  add(outData, " | echo -a parms: " & $estimatePointerSize(parms))
+  add(outData, " | echo -a data: " & $dataSizeEstimate)
+  add(outData, " | echo -a parms: " & $parmsSizeEstimate)
   add(outData, " | echo -a -")
   add(outData, " | echo -a Values returned by:")
   add(outData, " | echo -a mMajor: " & $mMajor())

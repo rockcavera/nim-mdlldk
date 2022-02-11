@@ -25,20 +25,56 @@ addUnloadProc(RAllowUnload):
   discard messageBox(mMainWindowHandle(), cstring(msg), cstring(title), cuint(0'u32))
 
 # This procedure estimates the memory size allocated to a `pointer`.
-proc estimatePointerSize(p: pointer): int =
+proc estimatePointersSize(d, p: pointer): tuple[d, p: int] =
+  const limit = 100_000
+
+  template estimate[T: cstring|WideCString](x: T, limitPtr: uint, counter: var int) =
+    when T is WideCString:
+      while int16(x[counter]) != 0'i16 and counter < limit and
+            cast[uint](unsafeAddr(x[counter])) < limitPtr:
+        inc(counter)
+    elif T is cstring:
+      while x[counter] != '\0' and counter < limit and
+            cast[uint](unsafeAddr(x[counter])) < limitPtr:
+        inc(counter)
+    when T is WideCString:
+      while int16(x[counter]) == 0'i16 and counter < limit and
+            cast[uint](unsafeAddr(x[counter])) < limitPtr:
+        inc(counter)
+    elif T is cstring:
+      while x[counter] == '\0' and counter < limit and
+            cast[uint](unsafeAddr(x[counter])) < limitPtr:
+        inc(counter)
+
   if mUnicode():
-    var p = cast[WideCString](p)
-    while int16(p[result]) != 0'i16 and result < 100000:
-      inc(result)
-    while int16(p[result]) == 0'i16 and result < 100000:
-      inc(result)
-    result = result * 2
+    let
+      d = cast[WideCString](d)
+      p = cast[WideCString](p)
+      dAddr = cast[uint](unsafeAddr(d[0]))
+      pAddr = cast[uint](unsafeAddr(p[0]))
+
+    if dAddr > pAddr:
+      estimate(p, dAddr, result.p)
+      estimate(d, high(uint), result.d)
+    else:
+      estimate(d, pAddr, result.d)
+      estimate(p, high(uint), result.p)
+
+    result.d = result.d * 2
+    result.p = result.p * 2
   else:
-    var p = cast[cstring](p)
-    while p[result] != '\0' and result < 100000:
-      inc(result)
-    while p[result] == '\0' and result < 100000:
-      inc(result)
+    let
+      d = cast[cstring](d)
+      p = cast[cstring](p)
+      dAddr = cast[uint](unsafeAddr(d[0]))
+      pAddr = cast[uint](unsafeAddr(p[0]))
+
+    if dAddr > pAddr:
+      estimate(p, dAddr, result.p)
+      estimate(d, high(uint), result.d)
+    else:
+      estimate(d, pAddr, result.d)
+      estimate(p, high(uint), result.p)
 
 # Adds the `debug` procedure which can be called from mIRC like this: `/dll tdebug.dll debug`.
 proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcReturn {.stdcall,
@@ -48,8 +84,10 @@ proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcRet
     sParms: string
     outData = newStringOfCap(mMaxBytes())
     outParms: string
-
-  let isUnicode = mUnicode()
+  
+  let
+    (dataSizeEstimate, parmsSizeEstimate) = estimatePointersSize(data, parms)
+    isUnicode = mUnicode()
 
   if isUnicode:
     var wData = cast[WideCString](data)
@@ -77,8 +115,8 @@ proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcRet
   add(outData, " | echo -a parms: " & $(cast[uint](parms)))
   add(outData, " | echo -a -")
   add(outData, " | echo -a Possible pointer size of:")
-  add(outData, " | echo -a data: " & $estimatePointerSize(data))
-  add(outData, " | echo -a parms: " & $estimatePointerSize(parms))
+  add(outData, " | echo -a data: " & $dataSizeEstimate)
+  add(outData, " | echo -a parms: " & $parmsSizeEstimate)
   add(outData, " | echo -a -")
   add(outData, " | echo -a Values returned by:")
   add(outData, " | echo -a mMajor: " & $mMajor())

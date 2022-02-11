@@ -24,18 +24,40 @@ addUnloadProc(RAllowUnload):
 
   discard messageBox(mMainWindowHandle(), cstring(msg), cstring(title), cuint(0'u32))
 
-# This procedure estimates the memory size allocated to a `pointer` or `WideCString`.
-proc estimatePointerSize(p: pointer|WideCString): int =
-  var p = cast[WideCString](p)
-  while int16(p[result]) != 0'i16 and result < 100000:
-    inc(result)
-  while int16(p[result]) == 0'i16 and result < 100000:
-    inc(result)
-  result = result * 2
+# This procedure estimates the memory size allocated to a `pointer`.
+proc estimatePointersSize(d, p: pointer): tuple[d, p: int] =
+  const limit = 100_000
 
-# Adds the `debug` procedure which can be called from mIRC like this: `/dll tdebuga.dll debug`.
+  template estimate(x: WideCString, limitPtr: uint, counter: var int) =
+    while int16(x[counter]) != 0'i16 and counter < limit and
+          cast[uint](unsafeAddr(x[counter])) < limitPtr:
+      inc(counter)
+    while int16(x[counter]) == 0'i16 and counter < limit and
+          cast[uint](unsafeAddr(x[counter])) < limitPtr:
+      inc(counter)
+
+  let
+    d = cast[WideCString](d)
+    p = cast[WideCString](p)
+    dAddr = cast[uint](unsafeAddr(d[0]))
+    pAddr = cast[uint](unsafeAddr(p[0]))
+
+  if dAddr > pAddr:
+    estimate(p, dAddr, result.p)
+    estimate(d, high(uint), result.d)
+  else:
+    estimate(d, pAddr, result.d)
+    estimate(p, high(uint), result.p)
+
+  result.d = result.d * 2
+  result.p = result.p * 2
+
+# Adds the `debug` procedure which can be called from mIRC like this: `/dll tdebugw.dll debug`.
 newProcToExportW(debug):
   var outData = newStringOfCap(mMaxBytes())
+
+  let (dataSizeEstimate, parmsSizeEstimate) = estimatePointersSize(unsafeAddr(data[0]),
+                                                                   unsafeAddr(parms[0]))
 
   add(outData, "echo -ea Dll debug made in Nim " & NimVersion & " for mIRC")
   add(outData, " | echo -ea Compiled with command line: " & querySetting(commandLine))
@@ -52,8 +74,8 @@ newProcToExportW(debug):
   add(outData, " | echo -a parms: " & $(cast[uint](parms)))
   add(outData, " | echo -a -")
   add(outData, " | echo -a Possible pointer size of:")
-  add(outData, " | echo -a data: " & $estimatePointerSize(data))
-  add(outData, " | echo -a parms: " & $estimatePointerSize(parms))
+  add(outData, " | echo -a data: " & $dataSizeEstimate)
+  add(outData, " | echo -a parms: " & $parmsSizeEstimate)
   add(outData, " | echo -a -")
   add(outData, " | echo -a Values returned by:")
   add(outData, " | echo -a mMajor: " & $mMajor())
