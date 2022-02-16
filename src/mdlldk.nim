@@ -82,7 +82,7 @@
 ## With this last line my generated dll had only 18.5KB against 139KB of the other one, using the
 ## Nim 1.6.4 and tdm64-gcc-10.3.0-2 compilers.
 
-import std/[compilesettings, macros, os, sets]
+import std/[compilesettings, macros, os, tables]
 
 import ./mdlldk/types
 
@@ -96,8 +96,11 @@ macro stringify(n: untyped): string =
   result = newNimNode(nnkStmtList, n)
   result.add(toStrLit(n))
 
-var dllProcs {.compileTime.} = initHashSet[tuple[name: string, size: int]]()
-  ## Hash set with the names of all procedures that should be exported to the dll.
+var
+  dllProcs {.compileTime.} = initTable[string, int]() # procName, size
+    ## Table with the names and size of all procedures that should be exported to the dll.
+  dllAliases {.compileTime.} = initTable[string, string]() # aliasName, procName
+    ## Table with the name of all aliases that must be made for the exported procedures.
 
 proc staticCreateDir(dir: string): bool {.compileTime.} =
   ## `createDir()` doesn't work at compile time, so this is a hack for Windows. It won't work on a
@@ -145,11 +148,19 @@ proc pExportAllProcs() {.compileTime.} =
 
   var s = "EXPORTS\r\n"
 
-  for name, size in items(dllProcs):
+  for name, size in pairs(dllProcs):
     when gnuSymbols:
       add(s, name & "=" & name & "@" & $size & "\r\n")
     else:
       add(s, name & "=_" & name & "@" & $size & "\r\n")
+  
+  for aliasName, procName in pairs(dllAliases):
+    if hasKey(dllProcs, procName):
+      let size = dllProcs[procName]
+      when gnuSymbols:
+        add(s, aliasName & "=" & procName & "@" & $size & "\r\n")
+      else:
+        add(s, aliasName & "=_" & procName & "@" & $size & "\r\n")
 
   writeFile(pathDef, s)
 
@@ -166,7 +177,11 @@ proc addProcToExport*(name: string, size: int) {.compileTime.} =
   ## - Don't forget to call the `exportAllProcs()` template at the end of your Nim code.
   ## - Should not use this proc to add procedures created with `newProcToExport()`,
   ##   `newProcToExportW()` and `newProcToExportA()`.
-  incl(dllProcs, (name, size))
+  dllProcs[name] = size
+
+proc addAliasFor*(procName, aliasName: string) {.compileTime.} =
+  ## Adds an alias `aliasName` to a procedure `procName` already exported to the dll.
+  dllAliases[aliasName] = procName
 
 template exportAllProcs*() =
   ## This template must be called at the end of your Nim code so that the .def file can be created
