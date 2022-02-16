@@ -39,7 +39,7 @@ EXIT /B
 
 :NIMCOMPILER
 SETLOCAL
-SET line=nim %3 -o:builds\ --nimcache:"builds\nimcache\%1" --cpu:i386 --cc:%2 --gc:%4 %1
+SET line=nim %3 -o:builds\ --nimcache:"builds\nimcache\%1" --app:lib --cpu:i386 --cc:%2 --gc:%4 %1
 %line% >nul 2>&1
 IF %ERRORLEVEL% neq 0 (
   ECHO [FAIL] %line%
