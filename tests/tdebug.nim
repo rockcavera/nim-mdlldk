@@ -84,7 +84,7 @@ proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcRet
     sParms: string
     outData = newStringOfCap(mMaxBytes())
     outParms: string
-  
+
   let
     (dataSizeEstimate, parmsSizeEstimate) = estimatePointersSize(data, parms)
     isUnicode = mUnicode()
@@ -119,6 +119,7 @@ proc debug(mWnd, aWnd: HWND, data, parms: pointer, show, nopause: BOOL): ProcRet
   add(outData, " | echo -a parms: " & $parmsSizeEstimate)
   add(outData, " | echo -a -")
   add(outData, " | echo -a Values returned by:")
+  add(outData, " | echo -a mInitialized: " & $mInitialized())
   add(outData, " | echo -a mMajor: " & $mMajor())
   add(outData, " | echo -a mMinor: " & $mMinor())
   add(outData, " | echo -a mBeta: " & $mBeta())

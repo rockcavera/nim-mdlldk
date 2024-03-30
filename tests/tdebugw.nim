@@ -78,6 +78,7 @@ newProcToExportW(debug):
   add(outData, " | echo -a parms: " & $parmsSizeEstimate)
   add(outData, " | echo -a -")
   add(outData, " | echo -a Values returned by:")
+  add(outData, " | echo -a mInitialized: " & $mInitialized())
   add(outData, " | echo -a mMajor: " & $mMajor())
   add(outData, " | echo -a mMinor: " & $mMinor())
   add(outData, " | echo -a mBeta: " & $mBeta())

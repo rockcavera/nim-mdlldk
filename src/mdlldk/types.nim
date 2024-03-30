@@ -1,15 +1,11 @@
-type
-  BOOL* = cint
-    ## Is a 32-bit field that is set to 1 to indicate TRUE, or 0 to
-    ## indicate FALSE.
-  HANDLE = int # or pointer?
-    ## A handle to an object.
-  HWND* = HANDLE
-    ## A handle to a window.
+from pkg/winim/inc/windef import BOOL, HWND
 
+export BOOL, HWND
+
+type
   LoadInfo* = object
-    ## Object received by the LoadDll() procedure when the dll is loaded in mIRC with $dll or /dll.
-    ## Brings and takes information to mIRC. Since mIRC v5.8.
+    ## Object received by the LoadDll() procedure when the dll is loaded in mIRC
+    ## with $dll or /dll. Brings and takes information to mIRC. Since mIRC v5.8.
     mVersion*: uint32
       ## Contains the mIRC version number in the low and high words.
     mHwnd*: HWND
@@ -31,7 +27,8 @@ type
       ## the `data` and `parms` variables. Since mIRC v7.64.
 
   UnloadMode* {.importc: "int", nodecl, size: sizeof(cint).} = enum
-    ## Values that indicate why the UnloadDll() procedure was called by mIRC. Since mIRC v5.8.
+    ## Values that indicate why the UnloadDll() procedure was called by mIRC.
+    ## Since mIRC v5.8.
     MManual = 0
       ## Unloaded with /dll -u. In versions older than mIRC v6.3 it may
       ## also be when mIRC exits.
@@ -50,8 +47,8 @@ type
       ## Allows the dll to be unloaded.
 
   ProcReturn* {.importc: "int", nodecl, size: sizeof(cint).} = enum
-    ## Values that can be returned by dll procedures. These values indicate what the mIRC should do.
-    ## Since mIRC v5.6.
+    ## Values that can be returned by dll procedures. These values indicate what
+    ## the mIRC should do. Since mIRC v5.6.
     RHalt = 0
       ## Means that mIRC should /halt processing.
     RContinue = 1
